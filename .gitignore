@@ -1,0 +1,26 @@
+# Python cache and temp files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv/
+rag_env/
+
+# Data folders
+data_raw/
+data_processed/
+data_clean/
+data_stage/
+embeddings/
+index/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker / build artifacts
+*.tar
+*.log

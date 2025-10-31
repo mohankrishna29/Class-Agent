@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Class RAG</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 860px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        h1 {
+            margin-bottom: .5rem;
+        }
+
+        .row {
+            display: flex;
+            gap: .5rem;
+            margin: .75rem 0;
+        }
+
+        input,
+        button,
+        select,
+        textarea {
+            font: inherit;
+            padding: .6rem .7rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+        }
+
+        .answer {
+            white-space: pre-wrap;
+            background: #f6f6f7;
+            padding: 1rem;
+            border-radius: .5rem;
+        }
+
+        .ctx {
+            margin-top: .5rem;
+            padding: .5rem .75rem;
+            background: #fbfbfc;
+            border: 1px solid #eee;
+            border-radius: .5rem;
+        }
+
+        .muted {
+            color: #666;
+            font-size: .9rem;
+        }
+        .badge {
+        display: inline-block;
+        padding: .2rem .45rem;
+        border-radius: .4rem;
+        font-weight: 600;
+        background: #eef2ff;
+        color: #1f2937;
+        margin-right: .5rem;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Class Agent</h1>
+    <div class="row">
+        <input id="token" placeholder="API token (default: dev-token)" />
+        <select id="k">
+            <option value="3">k=3</option>
+            <option value="5" selected>k=5</option>
+            <option value="8">k=8</option>
+        </select>
+    </div>
+    <div class="row">
+        <input id="q" type="text" placeholder="Ask a question about the course..." />
+        <button id="askBtn">Ask</button>
+    </div>
+
+    <div id="out"></div>
+
+    <script>
+        const qEl = document.getElementById('q');
+        const kEl = document.getElementById('k');
+        const tokenEl = document.getElementById('token');
+        const out = document.getElementById('out');
+
+        // remember token locally (dev convenience)
+        tokenEl.value = localStorage.getItem('classrag_token') || 'dev-token';
+        tokenEl.addEventListener('change', () => localStorage.setItem('classrag_token', tokenEl.value));
+
+        document.getElementById('askBtn').addEventListener('click', ask);
+        qEl.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+        function iconFor(mode) {
+            // if (mode === 'ASSESSMENT_GUARD') return '🧩';
+            // if (mode === 'COURSE_EXPLAIN') return '📘';
+            // if (mode === 'LAB_HELP') return '🔧';
+            return '💬';
+        }
+
+        async function ask() {
+            const question = qEl.value.trim();
+            if (!question) return;
+            out.innerHTML = '<p class="muted">Thinking…</p>';
+
+            const res = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (tokenEl.value || 'dev-token'),
+                },
+                body: JSON.stringify({ question, k: Number(kEl.value) })
+            });
+
+            let data;
+            try { data = await res.json(); } catch (_) { data = null; }
+
+            if (!res.ok) {
+                out.innerHTML = `<div class="answer">Error: ${data?.detail || data?.error || 'Request failed'}</div>`;
+                return;
+            }
+
+            const mode = data.mode || 'UNKNOWN';
+            const text = (data.text || '').replaceAll('\n', '<br>');
+
+            let html = `
+          <div class="answer">
+            <span class="badge">${iconFor(mode)} ${mode}</span>
+            <div style="margin-top:.5rem">${text || '(empty response)'}</div>
+          </div>
+        `;
+
+            // Optional: if your API later returns these fields, they’ll show up
+            if (Array.isArray(data.citations) && data.citations.length) {
+                html += `<p class="muted"><b>Sources:</b> ${data.citations.map(c => `[${c}]`).join(' ')}</p>`;
+            }
+            if (Array.isArray(data.contexts) && data.contexts.length) {
+                html += `<details open><summary>Retrieved contexts (${data.contexts.length})</summary>`;
+                for (const c of data.contexts) {
+                    html += `<div class="ctx"><div class="muted">${c.where}</div><div>${c.text}</div></div>`;
+                }
+                html += `</details>`;
+            }
+
+            out.innerHTML = html;
+        }
+    </script>
+
+</body>
+
+</html>
