@@ -31,6 +31,7 @@ It emulates how a teaching assistant would respond — offering hints, clarifica
 ⚙️ System Architecture
 
 The application is structured as a modular Retrieval-Augmented Generation (RAG) pipeline:
+```
                    ┌────────────────────────────┐
                    │  Course Materials (Raw)    │
                    │  PDFs, PPTs, Canvas Files  │
@@ -56,6 +57,8 @@ The application is structured as a modular Retrieval-Augmented Generation (RAG) 
                    │  FastAPI Backend + Web UI  │
                    │  Human-readable Answers    │
                    └────────────────────────────┘
+```
+
 
 
 🔬 The RAG Pipeline — Core Logic
@@ -90,6 +93,7 @@ For suspected exam-type questions, CourseIQ switches to “hint-only” mode.
 📁 Data Organization
 
 A deliberate and transparent folder structure was enforced to maintain traceability and reusability:
+```
 courseiq/
 │
 ├── data_raw/            # Unprocessed materials (Canvas ZIP, PDFs, PPTs)
@@ -101,7 +105,7 @@ courseiq/
 ├── .env                 # Environment variables (OpenAI key, port)
 ├── Dockerfile
 └── docker-compose.yml
-
+```
 🚀 Running the Application
 1. Local Setup
   git clone https://github.com/mohankrishna29/courseiq.git
